@@ -1,0 +1,47 @@
+# CI — lint + tests à chaque push et sur chaque PR vers main.
+# Le job « test » est le status check requis par la protection de branche :
+# aucun merge dans main sans qu'il soit vert.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+# Un même commit poussé sur une branche de PR ne tourne qu'une fois :
+# la nouvelle exécution annule la précédente encore en cours.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint & tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # vigilance brief : un pipeline > 10 min doit interroger
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer uv (avec cache des dépendances)
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Installer l'environnement (verrouillé sur uv.lock)
+        run: uv sync --locked
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Tests + couverture (pytest)
+        run: uv run pytest --cov=ml --cov-report=term --cov-report=xml
+
+      - name: Publier le rapport de couverture (artefact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-couverture
+          path: coverage.xml
