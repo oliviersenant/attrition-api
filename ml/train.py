@@ -24,6 +24,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import sklearn
+from preprocessing import charger_donnees, construire_pipeline, separer_X_y
 from sklearn.metrics import (
     average_precision_score,
     fbeta_score,
@@ -32,8 +33,6 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, train_test_split
-
-from preprocessing import charger_donnees, construire_pipeline, separer_X_y
 
 RANDOM_STATE = 42
 TEST_SIZE = 0.25

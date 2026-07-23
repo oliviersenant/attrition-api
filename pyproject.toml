@@ -32,5 +32,14 @@ dev = [
 testpaths = ["tests"]
 addopts = "-q"
 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "UP"]
+# Convention sklearn assumée : X (matrice de features) en majuscule.
+ignore = ["N802", "N803", "N806"]
+
 [tool.coverage.run]
 source = ["app", "ml"]
