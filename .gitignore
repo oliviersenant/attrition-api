@@ -1,0 +1,31 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+
+# --- Secrets & configuration locale ---
+.env
+*.env
+!.env.example
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Artefacts modèle lourds (régénérés par ml/train.py) ---
+# On garde metadata.json (léger) mais pas le binaire du modèle.
+ml/*.joblib
+
+# --- OS / IDE ---
+.DS_Store
+.vscode/
+.idea/
