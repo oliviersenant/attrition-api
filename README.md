@@ -48,15 +48,24 @@ cp .env.example .env         # puis renseigner DATABASE_URL et API_KEY
 
 # 3. Entraîner / régénérer l'artefact du modèle
 python -m ml.train           # produit ml/model.joblib + ml/metadata.json
+
+# 4. Base de données locale (PostgreSQL via Docker, port hôte 5433)
+docker compose up -d
+python -m scripts.create_db      # crée les tables (idempotent)
+python -m scripts.load_dataset   # insère les 1470 employés du dataset
 ```
 
-## Utilisation (à venir)
+## Utilisation
 
 ```bash
 # Lancer l'API en local
 uvicorn app.main:app --reload
 # Documentation interactive : http://localhost:8000/docs
 ```
+
+Chaque appel à `POST /predict` ou `POST /predict/batch` est **tracé en base**
+(input reçu + prédiction + seuil + version + horodatage) et relisible via
+`GET /predictions`. Schéma de la base : [docs/db_schema.md](docs/db_schema.md).
 
 ## Déploiement & sécurisation
 

@@ -7,6 +7,7 @@ les bornes numériques sont des garde-fous de vraisemblance, volontairement plus
 larges que les min/max du train — un employé de 62 ans doit rester prédictible.
 """
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -129,3 +130,17 @@ class HealthResponse(BaseModel):
     version_modele: str
     seuil: float
     date_entrainement: str
+
+
+class PredictionRecord(EmployeeFeatures):
+    """Ligne de la table `predictions` (relecture d'audit) : l'input tracé
+    tel que reçu + l'output rendu + le contexte de décision."""
+
+    id: int
+    probabilite_depart: float
+    prediction: Literal[0, 1]
+    seuil: float
+    version_modele: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

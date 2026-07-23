@@ -1,48 +1,36 @@
-"""Tests fonctionnels de l'API (endpoints, validation Pydantic, cohérence).
+"""Tests fonctionnels de l'API (endpoints, validation Pydantic, traçabilité).
 
 Le TestClient est utilisé en context manager pour déclencher le `lifespan`
 (chargement réel de l'artefact `ml/model.joblib`) : on teste l'API telle
-qu'elle démarre en production, pas un mock.
+qu'elle démarre en production, pas un mock. Seule la session DB est
+substituée (base de test), via le mécanisme officiel de FastAPI
+(`dependency_overrides`).
 """
 
 import pytest
+from donnees import EMPLOYE_VALIDE
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import sessionmaker
 
+from app.db import obtenir_session
 from app.main import app
-
-EMPLOYE_VALIDE = {
-    "age": 41,
-    "genre": "F",
-    "revenu_mensuel": 5993,
-    "statut_marital": "Célibataire",
-    "departement": "Commercial",
-    "poste": "Cadre Commercial",
-    "nombre_experiences_precedentes": 8,
-    "annee_experience_totale": 8,
-    "annees_dans_l_entreprise": 6,
-    "annees_dans_le_poste_actuel": 4,
-    "satisfaction_employee_environnement": 2,
-    "note_evaluation_precedente": 3,
-    "satisfaction_employee_nature_travail": 4,
-    "satisfaction_employee_equipe": 1,
-    "satisfaction_employee_equilibre_pro_perso": 1,
-    "heure_supplementaires": "Oui",
-    "augementation_salaire_precedente": 11,
-    "nombre_participation_pee": 0,
-    "nb_formations_suivies": 0,
-    "distance_domicile_travail": 1,
-    "niveau_education": 2,
-    "domaine_etude": "Infra & Cloud",
-    "frequence_deplacement": "Occasionnel",
-    "annees_depuis_la_derniere_promotion": 0,
-    "annes_sous_responsable_actuel": 5,
-}
 
 
 @pytest.fixture(scope="module")
-def client():
+def client(engine_db):
+    fabrique = sessionmaker(bind=engine_db, expire_on_commit=False)
+
+    def session_de_test():
+        session = fabrique()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[obtenir_session] = session_de_test
     with TestClient(app) as c:  # context manager => lifespan exécuté
         yield c
+    app.dependency_overrides.clear()
 
 
 # --- /health -----------------------------------------------------------------
@@ -140,3 +128,27 @@ def test_batch_un_invalide_rejette_tout(client):
     casse = {**EMPLOYE_VALIDE, "age": 200}
     reponse = client.post("/predict/batch", json=[EMPLOYE_VALIDE, casse])
     assert reponse.status_code == 422
+
+
+# --- Traçabilité (exigence brief : tout échange passe par la base) ------------
+
+
+def test_predict_trace_en_base(client):
+    """Chaque /predict ajoute exactement une ligne relisible via /predictions."""
+    avant = len(client.get("/predictions", params={"limite": 500}).json())
+    corps = client.post("/predict", json=EMPLOYE_VALIDE).json()
+    apres = client.get("/predictions", params={"limite": 500}).json()
+
+    assert len(apres) == avant + 1
+    derniere = apres[0]  # les plus récentes d'abord
+    assert derniere["probabilite_depart"] == corps["probabilite_depart"]
+    assert derniere["age"] == EMPLOYE_VALIDE["age"]  # l'input est bien snapshoté
+    assert derniere["created_at"] is not None
+
+
+def test_batch_trace_chaque_employe(client):
+    """Un batch de n employés ajoute n lignes (traçage exhaustif)."""
+    avant = len(client.get("/predictions", params={"limite": 500}).json())
+    client.post("/predict/batch", json=[EMPLOYE_VALIDE, EMPLOYE_VALIDE])
+    apres = len(client.get("/predictions", params={"limite": 500}).json())
+    assert apres == avant + 2

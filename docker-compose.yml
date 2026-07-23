@@ -1,0 +1,29 @@
+# Environnement de développement local.
+# Pour l'instant : la base PostgreSQL seule (l'API tourne via uvicorn) ;
+# le service `api` sera ajouté avec le Dockerfile à l'étape déploiement.
+#
+#   docker compose up -d          # démarre Postgres
+#   uv run python -m scripts.create_db
+#   uv run python -m scripts.load_dataset
+#   uv run uvicorn app.main:app --reload
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: futurisys
+      POSTGRES_PASSWORD: futurisys # dev local uniquement — jamais en prod
+      POSTGRES_DB: attrition
+    ports:
+      # 5433 côté hôte : le PostgreSQL système de la machine occupe déjà 5432
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U futurisys -d attrition"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
