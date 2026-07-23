@@ -37,8 +37,13 @@ jobs:
       - name: Lint (ruff)
         run: uv run ruff check .
 
+      # Décision « régénération plutôt que Git LFS » : l'artefact n'est pas
+      # versionné, les tests API le chargent tel qu'il démarre en production.
+      - name: Régénérer l'artefact du modèle
+        run: uv run python -m ml.train
+
       - name: Tests + couverture (pytest)
-        run: uv run pytest --cov=ml --cov-report=term --cov-report=xml
+        run: uv run pytest --cov=ml --cov=app --cov-report=term --cov-report=xml
 
       - name: Publier le rapport de couverture (artefact)
         uses: actions/upload-artifact@v4

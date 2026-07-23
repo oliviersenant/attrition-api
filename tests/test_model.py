@@ -5,8 +5,9 @@ inférence n=1, tolérance aux modalités inconnues, cohérence batch/unitaire.
 """
 
 import numpy as np
-from preprocessing import TARGET
 from sklearn.metrics import recall_score
+
+from ml.preprocessing import TARGET
 
 SEUIL_REFERENCE = 0.415  # metadata.json — recalculé par ml/train.py
 
