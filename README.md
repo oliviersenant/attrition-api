@@ -47,7 +47,7 @@ uv sync                      # installe les dépendances + le groupe dev
 cp .env.example .env         # puis renseigner DATABASE_URL et API_KEY
 
 # 3. Entraîner / régénérer l'artefact du modèle
-python ml/train.py           # produit ml/model.joblib + ml/metadata.json
+python -m ml.train           # produit ml/model.joblib + ml/metadata.json
 ```
 
 ## Utilisation (à venir)

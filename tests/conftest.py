@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 
 RACINE = Path(__file__).parent.parent
-sys.path.insert(0, str(RACINE / "ml"))
+sys.path.insert(0, str(RACINE))
 
-from preprocessing import (  # noqa: E402 (import après sys.path)
+from ml.preprocessing import (  # noqa: E402 (import après sys.path)
     charger_donnees,
     construire_pipeline,
     separer_X_y,

@@ -6,7 +6,8 @@ pandas 3 (dtype `str` vs `object`) rencontré pendant le développement.
 
 import pandas as pd
 import pytest
-from preprocessing import (
+
+from ml.preprocessing import (
     COLS_A_RETIRER,
     COLS_QUALITATIVES,
     TARGET,
