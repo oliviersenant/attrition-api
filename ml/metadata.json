@@ -1,0 +1,16 @@
+{
+  "modele": "RandomForestClassifier (Pipeline complet brut -> proba)",
+  "version": "0.1.0",
+  "date_entrainement": "2026-07-23",
+  "sklearn_version": "1.9.0",
+  "seuil_decision": 0.415,
+  "beta_seuil": 2,
+  "metriques_test": {
+    "rappel_oui": 0.712,
+    "precision_oui": 0.339,
+    "f2_oui": 0.583,
+    "pr_auc": 0.431
+  },
+  "n_employes": 1470,
+  "cible": "a_quitte_l_entreprise (1 = a quitté)"
+}
