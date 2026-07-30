@@ -8,15 +8,26 @@ SCHÉMA : les tables `employes` et `predictions` telles que déclarées dans
 Usage : uv run python -m scripts.create_db
 """
 
+from sqlalchemy.engine import Engine
+
 from app.db import Reglages, obtenir_engine
 from app.orm import Base
+
+
+def creer_tables(engine: Engine | None = None) -> list[str]:
+    """Crée les tables déclarées dans app/orm.py. Renvoie leurs noms.
+
+    `engine` est injectable (tests) ; par défaut celui de `DATABASE_URL`.
+    """
+    Base.metadata.create_all(engine or obtenir_engine())
+    return list(Base.metadata.tables)
 
 
 def main() -> None:
     url = Reglages().database_url
     print(f"Base cible : {url.split('@')[-1]}")  # sans les identifiants
-    Base.metadata.create_all(obtenir_engine())
-    print(f"Tables créées (ou déjà présentes) : {', '.join(Base.metadata.tables)}")
+    tables = creer_tables()
+    print(f"Tables créées (ou déjà présentes) : {', '.join(tables)}")
 
 
 if __name__ == "__main__":

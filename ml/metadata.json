@@ -1,7 +1,7 @@
 {
   "modele": "RandomForestClassifier (Pipeline complet brut -> proba)",
   "version": "0.1.0",
-  "date_entrainement": "2026-07-23",
+  "date_entrainement": "2026-07-30",
   "sklearn_version": "1.9.0",
   "seuil_decision": 0.415,
   "beta_seuil": 2,

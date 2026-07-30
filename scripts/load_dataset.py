@@ -20,21 +20,25 @@ from ml.preprocessing import TARGET, charger_donnees
 DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
 
 
-def main() -> None:
-    df = charger_donnees(DATA_DIR)
-    # Label texte -> binaire (même convention que l'entraînement : 1 = a quitté)
-    df[TARGET] = (df[TARGET] == "Oui").astype(int)
-    # "11 %" -> 11.0 : la table stocke la valeur numérique, comme l'API la reçoit
-    col_augmentation = "augementation_salaire_precedente"
-    df[col_augmentation] = (
-        df[col_augmentation].str.replace("%", "", regex=False).str.strip().astype(float)
-    )
-    # La table = le contrat du modèle : les colonnes constantes/redondantes des
-    # CSV bruts (aucune information, cf. EDA mission 3) ne sont pas stockées.
+def preparer_lignes(data_dir: str | Path = DATA_DIR) -> list[dict]:
+    """Prépare les lignes prêtes à insérer (fonction pure, testable).
+
+    La table `employes` reflète le **contrat du modèle**, pas la forme brute
+    des CSV : label binarisé, augmentation en valeur numérique, et seules les
+    colonnes de la table sont conservées (les constantes/redondantes de l'EDA
+    mission 3 n'y ont pas leur place).
+    """
+    df = charger_donnees(data_dir)
+    df[TARGET] = (df[TARGET] == "Oui").astype(int)  # 1 = a quitté
+    col = "augementation_salaire_precedente"
+    df[col] = df[col].str.replace("%", "", regex=False).str.strip().astype(float)
     colonnes_table = {colonne.key for colonne in inspect(Employe).columns}
     df = df[[colonne for colonne in df.columns if colonne in colonnes_table]]
-    lignes = df.to_dict(orient="records")
+    return df.to_dict(orient="records")
 
+
+def main() -> None:
+    lignes = preparer_lignes()
     session = next(obtenir_session())
     n = inserer_employes(session, lignes)
     total = compter_employes(session)

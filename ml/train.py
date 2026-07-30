@@ -32,6 +32,7 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, train_test_split
+from sklearn.pipeline import Pipeline
 
 from ml.preprocessing import charger_donnees, construire_pipeline, separer_X_y
 
@@ -58,24 +59,26 @@ def choisir_seuil_f2(pipeline, X_train, y_train, cv) -> float:
     return float(thr[np.nanargmax(fbeta[:-1])])
 
 
-def main() -> None:
+def entrainer(data_dir: str | Path = DATA_DIR) -> tuple[Pipeline, dict]:
+    """Entraîne le modèle et renvoie (pipeline servable, métadonnées).
+
+    Fonction pure (aucune écriture disque) : c'est elle qu'on teste pour la
+    reproductibilité. `main()` ne fait qu'appeler cette fonction et sérialiser.
+    """
     # 1. Données : jointure des 3 sources, X brut / y binaire
-    df = charger_donnees(DATA_DIR)
+    df = charger_donnees(data_dir)
     X, y = separer_X_y(df)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=TEST_SIZE, stratify=y, random_state=RANDOM_STATE
     )
-    print(f"Données : {X.shape[0]} employés — train {X_train.shape[0]} / test {X_test.shape[0]}")
 
-    # 2. Seuil de décision sur le train (OOF), puis fit final sur tout le train
+    # 2. Seuil de décision sur le train (OOF)
     pipeline = construire_pipeline()
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
     seuil = choisir_seuil_f2(pipeline, X_train, y_train, cv)
-    print(f"Seuil optimal (F{BETA}, OOF sur train) : {seuil:.3f}")
-
-    pipeline.fit(X_train, y_train)
 
     # 3. Évaluation sur le test jamais vu, au seuil optimal
+    pipeline.fit(X_train, y_train)
     proba_test = pipeline.predict_proba(X_test)[:, 1]
     pred_test = (proba_test >= seuil).astype(int)
     metriques = {
@@ -84,7 +87,6 @@ def main() -> None:
         "f2_oui": round(fbeta_score(y_test, pred_test, beta=BETA, zero_division=0), 3),
         "pr_auc": round(average_precision_score(y_test, proba_test), 3),
     }
-    print("Métriques test (classe « Oui », au seuil optimal) :", metriques)
 
     # 4. Ré-entraînement sur TOUTES les données avant mise en production :
     #    le seuil et les métriques ci-dessus restent la référence honnête
@@ -93,8 +95,6 @@ def main() -> None:
     pipeline_final = construire_pipeline()
     pipeline_final.fit(X, y)
 
-    # 5. Export des artefacts
-    joblib.dump(pipeline_final, ML_DIR / "model.joblib")
     metadata = {
         "modele": "RandomForestClassifier (Pipeline complet brut -> proba)",
         "version": "0.1.0",
@@ -106,9 +106,24 @@ def main() -> None:
         "n_employes": int(X.shape[0]),
         "cible": "a_quitte_l_entreprise (1 = a quitté)",
     }
-    (ML_DIR / "metadata.json").write_text(
+    return pipeline_final, metadata
+
+
+def exporter(pipeline: Pipeline, metadata: dict, ml_dir: str | Path = ML_DIR) -> None:
+    """Sérialise l'artefact et ses métadonnées dans `ml_dir`."""
+    ml_dir = Path(ml_dir)
+    joblib.dump(pipeline, ml_dir / "model.joblib")
+    (ml_dir / "metadata.json").write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+
+
+def main() -> None:
+    pipeline, metadata = entrainer()
+    print(f"Modèle entraîné sur {metadata['n_employes']} employés")
+    print(f"Seuil optimal (F{BETA}, OOF sur train) : {metadata['seuil_decision']:.3f}")
+    print("Métriques test (classe « Oui », au seuil optimal) :", metadata["metriques_test"])
+    exporter(pipeline, metadata)
     print(f"Artefacts écrits : {ML_DIR / 'model.joblib'}, {ML_DIR / 'metadata.json'}")
 
 
