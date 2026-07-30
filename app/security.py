@@ -1,0 +1,27 @@
+"""Authentification de l'API par clé (en-tête HTTP `X-API-Key`).
+
+Une fois l'API publique (déployée sur HF Spaces), n'importe qui peut appeler
+les endpoints. Une clé partagée est la protection minimale attendue : elle
+n'identifie pas *qui* appelle (ce n'est pas de l'OAuth), mais elle **restreint
+l'accès** aux détenteurs de la clé, ce qui suffit pour un POC interne.
+
+La clé attendue vient de la configuration (`API_KEY`, injectée par secret en
+prod). La comparaison utilise `secrets.compare_digest` : temps constant, pour
+ne pas fuiter d'information via la durée de la comparaison (timing attack).
+"""
+
+import secrets
+
+from fastapi import Header, HTTPException, status
+
+from app.db import Reglages
+
+
+def verifier_cle_api(x_api_key: str = Header(default="")) -> None:
+    """Dépendance FastAPI : rejette (401) toute requête sans clé valide."""
+    attendue = Reglages().api_key
+    if not secrets.compare_digest(x_api_key, attendue):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Clé d'API invalide ou absente (en-tête X-API-Key).",
+        )

@@ -1,3 +1,15 @@
+---
+title: Attrition API
+emoji: 📉
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+<!-- Le bloc ci-dessus est lu par Hugging Face Spaces (SDK Docker). -->
+
 # Attrition API — Déploiement du modèle de prédiction d'attrition (Futurisys)
 
 API de production exposant le modèle de **prédiction d'attrition des employés** développé pour

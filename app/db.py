@@ -18,6 +18,9 @@ class Reglages(BaseSettings):
     """Variables d'environnement de l'application (lues aussi depuis .env)."""
 
     database_url: str = "postgresql+psycopg://futurisys:futurisys@localhost:5433/attrition"
+    # Clé attendue dans l'en-tête X-API-Key. Défaut de DEV uniquement : en prod,
+    # la vraie clé est injectée par un secret (jamais celle-ci).
+    api_key: str = "dev-local-key"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -1,0 +1,16 @@
+# Ce qui n'a pas à entrer dans l'image (allège le build et le contexte).
+.git
+.github
+.venv
+tests
+docs
+presentation
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov
+.env
+ml/model.joblib      # régénéré au build par ml/train.py
