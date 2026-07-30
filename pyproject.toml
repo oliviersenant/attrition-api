@@ -31,6 +31,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = [
+    # Bruit de joblib/numpy 2.5 au chargement du modèle — hors de notre code.
+    "ignore:Setting the shape on a NumPy array:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100
@@ -42,4 +46,10 @@ select = ["E", "F", "W", "I", "N", "B", "UP"]
 ignore = ["N802", "N803", "N806"]
 
 [tool.coverage.run]
-source = ["app", "ml"]
+source = ["app", "ml", "scripts"]
+
+[tool.coverage.report]
+# Plancher de qualité : la CI échoue sous ce seuil (les main() CLI qui
+# ouvrent une vraie connexion DB sont volontairement exclus).
+fail_under = 90
+show_missing = true
