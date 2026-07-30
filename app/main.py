@@ -27,6 +27,11 @@ from app.schemas import (
     PredictionRecord,
     PredictionResponse,
 )
+from app.security import verifier_cle_api
+
+# Endpoints protégés par clé d'API (l'en-tête X-API-Key est exigé) ;
+# /health reste public pour permettre le monitoring d'infrastructure.
+protege = Depends(verifier_cle_api)
 
 DESCRIPTION = """
 Prédit le risque de départ d'un employé (classification binaire, RandomForest).
@@ -68,7 +73,12 @@ def health(request: Request) -> dict:
     }
 
 
-@app.post("/predict", response_model=PredictionResponse, tags=["prediction"])
+@app.post(
+    "/predict",
+    response_model=PredictionResponse,
+    tags=["prediction"],
+    dependencies=[protege],
+)
 def predict(
     employe: EmployeeFeatures,
     request: Request,
@@ -86,7 +96,12 @@ def predict(
     return resultat
 
 
-@app.post("/predict/batch", response_model=list[PredictionResponse], tags=["prediction"])
+@app.post(
+    "/predict/batch",
+    response_model=list[PredictionResponse],
+    tags=["prediction"],
+    dependencies=[protege],
+)
 def predict_batch(
     employes: Annotated[list[EmployeeFeatures], Field(min_length=1, max_length=1000)],
     request: Request,
@@ -100,7 +115,12 @@ def predict_batch(
     return resultats
 
 
-@app.get("/predictions", response_model=list[PredictionRecord], tags=["monitoring"])
+@app.get(
+    "/predictions",
+    response_model=list[PredictionRecord],
+    tags=["monitoring"],
+    dependencies=[protege],
+)
 def predictions(
     session: Annotated[Session, Depends(obtenir_session)],
     limite: Annotated[int, Query(ge=1, le=500, description="Nb max de lignes")] = 50,

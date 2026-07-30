@@ -1,12 +1,14 @@
-# CI — lint + tests à chaque push et sur chaque PR vers main.
+# CI/CD — lint + tests à chaque push/PR ; déploiement HF Spaces sur tag v*.
 # Le job « test » est le status check requis par la protection de branche :
-# aucun merge dans main sans qu'il soit vert.
+# aucun merge dans main sans qu'il soit vert. Le job « deploy » ne tourne que
+# sur un tag de version, et seulement si « test » est vert (needs).
 
 name: CI
 
 on:
   push:
     branches: ["**"]
+    tags: ["v*"] # un tag de version déclenche le déploiement
   pull_request:
     branches: [main]
 
@@ -72,3 +74,28 @@ jobs:
         with:
           name: rapport-couverture
           path: coverage.xml
+
+  deploy:
+    name: Déploiement Hugging Face Spaces
+    needs: test # ne déploie jamais du code qui n'a pas passé les tests
+    if: startsWith(github.ref, 'refs/tags/v') # uniquement sur un tag de version
+    runs-on: ubuntu-latest
+    # Environnement GitHub « production » : c'est lui qui porte les secrets de
+    # déploiement (HF_TOKEN) et permet, au besoin, une validation manuelle.
+    environment: production
+
+    steps:
+      - name: Checkout (historique complet pour le push vers HF)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pousser le dépôt vers le Space (HF construit l'image Docker)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ vars.HF_USERNAME }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          git push --force \
+            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}.git" \
+            HEAD:refs/heads/main

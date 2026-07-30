@@ -12,8 +12,10 @@ from donnees import EMPLOYE_VALIDE
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
-from app.db import obtenir_session
+from app.db import Reglages, obtenir_session
 from app.main import app
+
+CLE_API = Reglages().api_key  # la clé attendue par l'app (défaut de dev)
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +30,9 @@ def client(engine_db):
             session.close()
 
     app.dependency_overrides[obtenir_session] = session_de_test
-    with TestClient(app) as c:  # context manager => lifespan exécuté
+    # La clé d'API valide est envoyée par défaut sur toutes les requêtes du
+    # client ; les tests d'authentification la surchargent explicitement.
+    with TestClient(app, headers={"X-API-Key": CLE_API}) as c:
         yield c
     app.dependency_overrides.clear()
 
@@ -42,6 +46,31 @@ def test_health(client):
     corps = reponse.json()
     assert corps["status"] == "ok"
     assert 0 < corps["seuil"] < 1
+
+
+def test_health_public_sans_cle(client):
+    """/health reste accessible sans clé (monitoring d'infrastructure)."""
+    reponse = client.get("/health", headers={"X-API-Key": ""})
+    assert reponse.status_code == 200
+
+
+# --- Authentification (endpoints protégés) -----------------------------------
+
+
+def test_predict_sans_cle_401(client):
+    reponse = client.post("/predict", json=EMPLOYE_VALIDE, headers={"X-API-Key": ""})
+    assert reponse.status_code == 401
+
+
+def test_predict_mauvaise_cle_401(client):
+    reponse = client.post(
+        "/predict", json=EMPLOYE_VALIDE, headers={"X-API-Key": "mauvaise-cle"}
+    )
+    assert reponse.status_code == 401
+
+
+def test_predictions_protege(client):
+    assert client.get("/predictions", headers={"X-API-Key": ""}).status_code == 401
 
 
 # --- /predict : cas nominal --------------------------------------------------
