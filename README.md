@@ -1,15 +1,3 @@
----
-title: Attrition API
-emoji: 📉
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 7860
-pinned: false
----
-
-<!-- Le bloc ci-dessus est lu par Hugging Face Spaces (SDK Docker). -->
-
 # Attrition API — Déploiement du modèle de prédiction d'attrition (Futurisys)
 
 API de production exposant le modèle de **prédiction d'attrition des employés** développé pour
@@ -81,13 +69,16 @@ Chaque appel à `POST /predict` ou `POST /predict/batch` est **tracé en base**
 
 ## Déploiement & sécurisation
 
-- **Hébergement :** API conteneurisée sur **Hugging Face Spaces** ; base **PostgreSQL managée**
-  (Neon/Supabase) connectée via le secret `DATABASE_URL`.
-- **Authentification :** endpoints protégés par clé d'API (en-tête `X-API-Key`).
-- **Secrets :** jamais dans le dépôt — gérés via GitHub Secrets / secrets HF Spaces.
+- **Hébergement :** API conteneurisée (Docker) déployée sur **Render** ; base **PostgreSQL managée**
+  (**Neon**) connectée via le secret `DATABASE_URL`. Infra décrite dans [render.yaml](render.yaml).
+- **CI/CD :** GitHub Actions (tests + couverture à chaque push) ; le déploiement Render est déclenché
+  par un **tag de version** (job `deploy`, environnement `production`).
+- **Authentification :** endpoints de prédiction protégés par clé d'API (en-tête `X-API-Key`) ;
+  `/health` reste public.
+- **Secrets :** jamais dans le dépôt — `RENDER_DEPLOY_HOOK` dans l'environnement GitHub `production`,
+  `DATABASE_URL` et `API_KEY` dans les variables du service Render.
 
-*(Sections install/usage/déploiement détaillées complétées au fil des étapes — voir
-[docs/plan_mission.md](docs/plan_mission.md).)*
+Guide de déploiement pas à pas : [docs/deploiement.md](docs/deploiement.md).
 
 ## Contribuer
 
