@@ -1,4 +1,4 @@
-# Image de l'API pour Hugging Face Spaces (SDK Docker, port 7860).
+# Image de l'API (déployée sur Render, hébergeur Docker « équivalent HF Spaces »).
 # Le modèle n'est PAS versionné (décision « régénération plutôt que Git LFS ») :
 # il est ré-entraîné au build à partir des CSV du dépôt, de façon déterministe.
 
@@ -23,6 +23,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY . .
 RUN uv sync --locked --no-dev && python -m ml.train
 
-# 3. HF Spaces attend l'app sur 0.0.0.0:7860.
+# 3. L'hébergeur fournit le port via $PORT (Render, Koyeb…) ; défaut 7860 en local.
+#    Forme shell pour que ${PORT} soit substitué au démarrage.
 EXPOSE 7860
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

@@ -1,0 +1,22 @@
+# Infrastructure-as-Code — définition du service déployé sur Render.
+# https://render.com/docs/blueprint-spec
+#
+# Le déploiement est déclenché par un tag de version (job « deploy » de la CI,
+# qui appelle le deploy hook Render) : autoDeploy est donc désactivé pour que
+# les pushs de branche ne redéploient pas la prod.
+
+services:
+  - type: web
+    name: attrition-api
+    runtime: docker
+    plan: free
+    region: frankfurt # UE, comme la base Neon (Londres) — latence faible
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false # déploiement piloté par tag via GitHub Actions
+    healthCheckPath: /health # Render surveille l'API sur cet endpoint public
+    envVars:
+      # Renseignées dans le dashboard Render (secrets) — jamais dans le dépôt.
+      - key: DATABASE_URL
+        sync: false
+      - key: API_KEY
+        sync: false

@@ -76,26 +76,17 @@ jobs:
           path: coverage.xml
 
   deploy:
-    name: Déploiement Hugging Face Spaces
+    name: Déploiement Render
     needs: test # ne déploie jamais du code qui n'a pas passé les tests
     if: startsWith(github.ref, 'refs/tags/v') # uniquement sur un tag de version
     runs-on: ubuntu-latest
-    # Environnement GitHub « production » : c'est lui qui porte les secrets de
-    # déploiement (HF_TOKEN) et permet, au besoin, une validation manuelle.
+    # Environnement GitHub « production » : c'est lui qui porte le secret de
+    # déploiement (RENDER_DEPLOY_HOOK) et permet, au besoin, une validation
+    # manuelle avant mise en prod.
     environment: production
 
     steps:
-      - name: Checkout (historique complet pour le push vers HF)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Pousser le dépôt vers le Space (HF construit l'image Docker)
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USERNAME: ${{ vars.HF_USERNAME }}
-          HF_SPACE: ${{ vars.HF_SPACE }}
-        run: |
-          git push --force \
-            "https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}.git" \
-            HEAD:refs/heads/main
+      - name: Déclencher le déploiement Render
+        # Le deploy hook demande à Render de reconstruire l'image (qui
+        # ré-entraîne le modèle) et de redéployer le service.
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
