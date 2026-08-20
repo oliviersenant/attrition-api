@@ -12,15 +12,20 @@ ne pas fuiter d'information via la durée de la comparaison (timing attack).
 
 import secrets
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import APIKeyHeader
 
 from app.db import Reglages
 
+# Déclaré comme *security scheme* OpenAPI : fait apparaître le bouton « Authorize »
+# dans Swagger. auto_error=False → on renvoie notre propre 401 (message explicite).
+cle_api_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
-def verifier_cle_api(x_api_key: str = Header(default="")) -> None:
+
+def verifier_cle_api(cle: str | None = Depends(cle_api_header)) -> None:
     """Dépendance FastAPI : rejette (401) toute requête sans clé valide."""
     attendue = Reglages().api_key
-    if not secrets.compare_digest(x_api_key, attendue):
+    if cle is None or not secrets.compare_digest(cle, attendue):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Clé d'API invalide ou absente (en-tête X-API-Key).",
