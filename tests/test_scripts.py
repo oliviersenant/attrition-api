@@ -2,7 +2,7 @@
 
 from sqlalchemy import inspect
 
-from app.db import Reglages, obtenir_engine, obtenir_session
+from app.db import Reglages, normaliser_url, obtenir_engine, obtenir_session
 from app.orm import Employe
 from scripts.create_db import creer_tables
 from scripts.load_dataset import preparer_lignes
@@ -52,6 +52,20 @@ def test_creer_tables(engine_db):
 def test_reglages_defaut():
     """La config lit une URL (env ou défaut) sans jamais se connecter."""
     assert Reglages().database_url.startswith("postgresql")
+
+
+def test_normaliser_url_force_psycopg():
+    """Une URL d'hébergeur (postgresql:// ou postgres://) reçoit le driver psycopg."""
+    attendu = "postgresql+psycopg://u:p@host/db?sslmode=require"
+    assert normaliser_url("postgresql://u:p@host/db?sslmode=require") == attendu
+    assert normaliser_url("postgres://u:p@host/db?sslmode=require") == attendu
+
+
+def test_normaliser_url_laisse_intacte_si_deja_qualifiee():
+    """Une URL déjà qualifiée (driver explicite) n'est pas modifiée."""
+    deja = "postgresql+psycopg://u:p@host/db"
+    assert normaliser_url(deja) == deja
+    assert normaliser_url("sqlite://") == "sqlite://"
 
 
 def test_obtenir_session_ouvre_et_ferme():

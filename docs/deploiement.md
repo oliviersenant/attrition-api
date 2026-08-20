@@ -33,7 +33,8 @@ postgresql+psycopg://<user>:<password>@<host>/<db>?sslmode=require
      région **Frankfurt**.
    - **Auto-Deploy : No** (le déploiement sera piloté par tag via GitHub Actions).
 3. **Environment → Environment Variables**, ajouter :
-   - `DATABASE_URL` = l'URL Neon (format `postgresql+psycopg://…?sslmode=require`) ;
+   - `DATABASE_URL` = l'URL Neon. L'URL brute de Neon (`postgresql://…?sslmode=require`) suffit :
+     l'app force le driver psycopg v3 automatiquement (`app/db.py:normaliser_url`).
    - `API_KEY` = une clé forte de ton choix (l'en-tête `X-API-Key` pour appeler l'API).
    - *(Render fournit `PORT` automatiquement — ne pas le définir.)*
 4. **Settings → Deploy Hook** : copier l'URL du **deploy hook** (elle sert à GitHub pour déclencher

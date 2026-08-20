@@ -25,11 +25,26 @@ class Reglages(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
+def normaliser_url(url: str) -> str:
+    """Force le driver psycopg (v3) sur une URL PostgreSQL sans driver explicite.
+
+    Les hébergeurs (Neon, Render, Heroku…) fournissent des URL `postgresql://`
+    (ou l'ancien `postgres://`). SQLAlchemy y associe alors par défaut le driver
+    **psycopg2**, que l'on n'installe pas → `ModuleNotFoundError`. On réécrit le
+    schéma pour pointer psycopg v3, ce qu'on utilise. Une URL déjà qualifiée
+    (`postgresql+psycopg://`, `sqlite://`…) est laissée intacte.
+    """
+    for prefixe in ("postgresql://", "postgres://"):
+        if url.startswith(prefixe):
+            return "postgresql+psycopg://" + url[len(prefixe) :]
+    return url
+
+
 @lru_cache
 def obtenir_engine():
     # pool_pre_ping : vérifie la connexion avant chaque emprunt au pool —
     # évite les erreurs sur connexions fermées côté serveur (idle timeout).
-    return create_engine(Reglages().database_url, pool_pre_ping=True)
+    return create_engine(normaliser_url(Reglages().database_url), pool_pre_ping=True)
 
 
 @lru_cache
