@@ -5,7 +5,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .coverage
-htmlcov/
+htmlcov/          # rapport de couverture HTML (régénéré : pytest --cov-report=html)
 coverage.xml
 
 # --- Environnements virtuels ---
