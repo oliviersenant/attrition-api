@@ -5,7 +5,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .coverage
-htmlcov/
+htmlcov/          # rapport de couverture HTML (régénéré : pytest --cov-report=html)
 coverage.xml
 
 # --- Environnements virtuels ---
@@ -29,3 +29,7 @@ ml/*.joblib
 .DS_Store
 .vscode/
 .idea/
+
+# Rendus temporaires du deck (QA)
+presentation/slide-*.jpg
+presentation/_*.png

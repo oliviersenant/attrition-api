@@ -58,6 +58,7 @@ Dockerfile · render.yaml · .github/workflows/ci.yml
 ```bash
 # 1. Environnement (uv recommandé, cohérent avec le parcours)
 uv sync                      # installe les dépendances + le groupe dev
+# — alternative pip : python -m venv .venv && pip install -r requirements.txt
 
 # 2. Configuration
 cp .env.example .env         # puis renseigner DATABASE_URL et API_KEY

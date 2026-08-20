@@ -67,13 +67,15 @@ jobs:
       - name: Tests + couverture (pytest)
         # Le seuil minimal (fail_under=90) est défini dans pyproject.toml :
         # la CI échoue si la couverture régresse sous ce plancher.
-        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml --cov-report=html
 
-      - name: Publier le rapport de couverture (artefact)
+      - name: Publier le rapport de couverture (XML + HTML)
         uses: actions/upload-artifact@v4
         with:
           name: rapport-couverture
-          path: coverage.xml
+          path: |
+            coverage.xml
+            htmlcov/
 
   deploy:
     name: Déploiement Render
