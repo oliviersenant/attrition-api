@@ -29,3 +29,7 @@ ml/*.joblib
 .DS_Store
 .vscode/
 .idea/
+
+# Rendus temporaires du deck (QA)
+presentation/slide-*.jpg
+presentation/_*.png
