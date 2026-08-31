@@ -33,3 +33,9 @@ ml/*.joblib
 # Rendus temporaires du deck (QA)
 presentation/slide-*.jpg
 presentation/_*.png
+
+# --- Fichiers gardés en local, hors du dépôt (briefs, plan, support de soutenance) ---
+Livrables et soutenance.md
+Mission - Déployez un modèle de Machine Learning.md
+docs/plan_mission.md
+presentation/
